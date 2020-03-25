@@ -1,9 +1,9 @@
 package datasource
 
 import (
-	"../conf"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/jinzhu/gorm"
+	"github.com/wuduozhi/gorm-demo/conf"
 	"strings"
 	"time"
 )
