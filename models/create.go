@@ -6,11 +6,11 @@ import (
 )
 
 type CreateLog struct {
-	CompanyIDs []int
-	CctNoS     []string
+	CompanyIDs    []int
+	CctNoS        []string
 	CctCompanyMap map[string]int
-	MeterNos   []string
-	MeterCctMap map[string]string
+	MeterNos      []string
+	MeterCctMap   map[string]string
 }
 
 func CreateCompany(model Company, db *gorm.DB) {
@@ -31,6 +31,12 @@ func CreateMeterData(model MeterData, db *gorm.DB) {
 
 func CreateHisMeterData(model HisMeterData, db *gorm.DB) {
 	db.Create(&model)
+}
+
+func GetHisMeterData(id int, db *gorm.DB) HisMeterData {
+	var hisMeterData HisMeterData
+	db.Where("id = ?", id).First(&hisMeterData)
+	return hisMeterData
 }
 
 func createCompany(db *gorm.DB) {

@@ -1,6 +1,12 @@
 package pool
 
-import "fmt"
+import (
+	"fmt"
+	"github.com/jinzhu/gorm"
+	"github.com/wuduozhi/gorm-demo/models"
+	"strings"
+	"time"
+)
 
 type Worker interface {
 	// Process will synchronously perform a job and return the result.
@@ -80,6 +86,8 @@ type workerWrapper struct {
 
 	// closedChan is closed by the run() goroutine when it exits.
 	closedChan chan struct{}
+
+	db *gorm.DB
 }
 
 func (w *workerWrapper) interrupt() {
@@ -100,6 +108,14 @@ func (w *workerWrapper) run() {
 		case w.reqChan <- workRequest{jobChan: jobChan, retChan: retChan, interruptFunc: w.interrupt}:
 			select {
 			case payload := <-jobChan:
+				// 特殊处理 his-meter
+				switch payload.(type) {
+				case models.HisMeterData:
+					hisMeterData := payload.(models.HisMeterData)
+					models.CreateHisMeterData(hisMeterData, w.db)
+				default:
+
+				}
 				result := w.worker.Process(payload)
 				select {
 				case retChan <- result:
@@ -136,6 +152,7 @@ func newWorkerWrapper(reqChan chan<- workRequest, worker Worker) *workerWrapper 
 		reqChan:       reqChan,
 		closeChan:     make(chan struct{}),
 		closedChan:    make(chan struct{}),
+		db:            getMyCatDb(),
 	}
 	workerNameIndex++
 
@@ -160,4 +177,48 @@ func NewFunc(n int, f func(interface{}) interface{}) *Pool {
 			processor: f,
 		}
 	})
+}
+
+func getSingleDb() *gorm.DB {
+	dbUserName := "root"
+	dbPassword := "123456"
+	dbIP := "localhost"
+	dbPort := "3306"
+	dbName := "cbdata"
+
+	path := strings.Join([]string{dbUserName, ":", dbPassword, "@(", dbIP, ":", dbPort, ")/", dbName, "?charset=utf8&parseTime=true"}, "")
+	var err error
+	singleDb, err := gorm.Open("mysql", path)
+	if err != nil {
+		panic(err)
+	}
+
+	initExtraDb(singleDb)
+	return singleDb
+}
+
+func getMyCatDb() *gorm.DB {
+	dbUserName := "root"
+	dbPassword := "123456"
+	dbIP := "120.79.214.246"
+	dbPort := "8066"
+	dbName := "TESTDB"
+
+	path := strings.Join([]string{dbUserName, ":", dbPassword, "@(", dbIP, ":", dbPort, ")/", dbName, "?charset=utf8&parseTime=true"}, "")
+	var err error
+	mycatDb, err := gorm.Open("mysql", path)
+	if err != nil {
+		panic(err)
+	}
+
+	initExtraDb(mycatDb)
+	return mycatDb
+}
+
+func initExtraDb(db *gorm.DB) {
+	db.DB().SetConnMaxLifetime(2 * time.Hour)
+	db.DB().SetMaxIdleConns(20)
+	db.DB().SetMaxOpenConns(2000)
+	// 启用Logger，显示详细日志
+	db.LogMode(true)
 }

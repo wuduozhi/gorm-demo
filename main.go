@@ -53,7 +53,7 @@ func initExtraDb(db *gorm.DB) {
 	db.DB().SetMaxIdleConns(20)
 	db.DB().SetMaxOpenConns(2000)
 	// 启用Logger，显示详细日志
-	db.LogMode(true)
+	db.LogMode(false)
 }
 
 func init() {
@@ -260,8 +260,8 @@ func CreateBenchHisMeterData(count, poolSize int, db *gorm.DB) (useTime time.Dur
 	doChan := make(chan struct{}, count)
 
 	doFunc := func(req interface{}) interface{} {
-		hisMeterData := req.(models.HisMeterData)
-		models.CreateHisMeterData(hisMeterData, db)
+		//hisMeterData := req.(models.HisMeterData)
+		//models.CreateHisMeterData(hisMeterData, db)
 		doChan <- struct{}{}
 		return nil
 	}
@@ -296,32 +296,65 @@ func CreateBenchHisMeterData(count, poolSize int, db *gorm.DB) (useTime time.Dur
 	return
 }
 
+func SelectBenchHisMeterData(count, poolSize int, db *gorm.DB) (useTime time.Duration) {
+
+	doChan := make(chan struct{}, count)
+
+	doFunc := func(req interface{}) interface{} {
+		id := req.(int)
+		models.GetHisMeterData(id,db)
+		doChan <- struct{}{}
+		return nil
+	}
+
+	p := pool.NewFunc(poolSize, doFunc)
+	defer p.Close()
+	fmt.Println("start his meter data...")
+
+	startTime := time.Now()
+	for i := 0; i < count; i++ {
+		id := utils.RandomInt(100,5000000)
+		go p.Process(id)
+	}
+
+	for i := 0; i < count; i++ {
+		<-doChan
+	}
+	useTime = time.Now().Sub(startTime)
+
+	return
+}
+
 func PrintFormat(tableName, testDB string, poolSize, count int, useTime time.Duration) {
 	fmt.Printf("Insert into %v %v records use %v seconds by %v goroutines.%v\n",
 		tableName, count, useTime.Seconds(), poolSize, testDB)
 }
 
 func main() {
-	poolSize := 32
+	poolSize := 8*2*2
 	var useTime time.Duration
 
-	companyCount := 100
+	companyCount := 10000
 	_, useTime = CreateBenchCompany(companyCount, poolSize, mycatDb)
 	PrintFormat("comapny", "mycat", poolSize, companyCount, useTime)
 
-	cctCount := 100
+	cctCount := 10000
 	_, useTime = CreateBenchCct(nil, cctCount, poolSize, mycatDb)
 	PrintFormat("cct", "mycat", poolSize, cctCount, useTime)
 
-	meterCount := 100
+	meterCount := 10000
 	useTime = CreateBenchMeter(meterCount, poolSize, mycatDb)
 	PrintFormat("meter", "mycat", poolSize, cctCount, useTime)
 
-	meterDataCount := 100
+	meterDataCount := 10000
 	useTime = CreateBenchMeterData(meterDataCount, poolSize, mycatDb)
 	PrintFormat("meter-data", "mycat", poolSize, meterDataCount, useTime)
 
-	hisMeterDataCount := 100
+	hisMeterDataCount := 20000
 	useTime = CreateBenchHisMeterData(hisMeterDataCount, poolSize, mycatDb)
-	PrintFormat("his-meter-data", "mycat", poolSize, meterDataCount, useTime)
+	PrintFormat("his-meter-data", "mycat", poolSize, hisMeterDataCount, useTime)
+
+	//insertHisMeterDataCount := 1600
+	//useTime = SelectBenchHisMeterData(insertHisMeterDataCount, poolSize, mycatDb)
+	//PrintFormat("his-meter-data", "mycat", poolSize, insertHisMeterDataCount, useTime)
 }
