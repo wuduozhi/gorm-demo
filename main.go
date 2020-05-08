@@ -334,23 +334,23 @@ func main() {
 	poolSize := 8*2*2
 	var useTime time.Duration
 
-	companyCount := 10000
+	companyCount := 100
 	_, useTime = CreateBenchCompany(companyCount, poolSize, mycatDb)
 	PrintFormat("comapny", "mycat", poolSize, companyCount, useTime)
 
-	cctCount := 10000
+	cctCount := 100
 	_, useTime = CreateBenchCct(nil, cctCount, poolSize, mycatDb)
 	PrintFormat("cct", "mycat", poolSize, cctCount, useTime)
 
-	meterCount := 10000
+	meterCount := 600
 	useTime = CreateBenchMeter(meterCount, poolSize, mycatDb)
 	PrintFormat("meter", "mycat", poolSize, cctCount, useTime)
 
-	meterDataCount := 10000
+	meterDataCount := 1000
 	useTime = CreateBenchMeterData(meterDataCount, poolSize, mycatDb)
 	PrintFormat("meter-data", "mycat", poolSize, meterDataCount, useTime)
 
-	hisMeterDataCount := 20000
+	hisMeterDataCount := 2000
 	useTime = CreateBenchHisMeterData(hisMeterDataCount, poolSize, mycatDb)
 	PrintFormat("his-meter-data", "mycat", poolSize, hisMeterDataCount, useTime)
 

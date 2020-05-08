@@ -141,10 +141,10 @@ if __name__ == '__main__':
         print("error")
     
 
-    companuCount = 10
-    cctCount = 10
-    meterCount = 10
-    hisMeterDataCount = 15
+    companuCount = 8
+    cctCount = 5
+    meterCount = 5
+    hisMeterDataCount = 8
 
     start = '2017-06-02 12:12:12'
     end = '2020-11-01 00:00:00'
