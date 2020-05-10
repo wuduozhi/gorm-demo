@@ -3,7 +3,6 @@ package pool
 import (
 	"fmt"
 	"github.com/jinzhu/gorm"
-	"github.com/wuduozhi/gorm-demo/models"
 	"strings"
 	"time"
 )
@@ -108,14 +107,6 @@ func (w *workerWrapper) run() {
 		case w.reqChan <- workRequest{jobChan: jobChan, retChan: retChan, interruptFunc: w.interrupt}:
 			select {
 			case payload := <-jobChan:
-				// 特殊处理 his-meter
-				switch payload.(type) {
-				case models.HisMeterData:
-					hisMeterData := payload.(models.HisMeterData)
-					models.CreateHisMeterData(hisMeterData, w.db)
-				default:
-
-				}
 				result := w.worker.Process(payload)
 				select {
 				case retChan <- result:
@@ -152,7 +143,6 @@ func newWorkerWrapper(reqChan chan<- workRequest, worker Worker) *workerWrapper 
 		reqChan:       reqChan,
 		closeChan:     make(chan struct{}),
 		closedChan:    make(chan struct{}),
-		db:            getMyCatDb(),
 	}
 	workerNameIndex++
 

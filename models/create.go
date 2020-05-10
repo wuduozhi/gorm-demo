@@ -1,6 +1,7 @@
 package models
 
 import (
+	"fmt"
 	"github.com/jinzhu/gorm"
 	"time"
 )
@@ -33,10 +34,36 @@ func CreateHisMeterData(model HisMeterData, db *gorm.DB) {
 	db.Create(&model)
 }
 
+func GetHisMeterByMeterNo(meterNo string, db *gorm.DB) []HisMeterData {
+	var hisMeterDatas []HisMeterData
+	db.Where("meterno = ?", meterNo).Order("updateTime desc").Find(&hisMeterDatas)
+	return hisMeterDatas
+}
+
+func GetHisMeterByMeterNoRaw(meterNo string, db *gorm.DB) []HisMeterData {
+	rows, err := db.Model(&HisMeterData{}).Where("meterno = ?", meterNo).Select("id").Rows() // (*sql.Rows, error)
+	if err != nil {
+		return nil
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var id int
+		rows.Scan(&id)
+		fmt.Println(id)
+	}
+	return nil
+}
+
 func GetHisMeterData(id int, db *gorm.DB) HisMeterData {
 	var hisMeterData HisMeterData
 	db.Where("id = ?", id).First(&hisMeterData)
 	return hisMeterData
+}
+
+func GetHisMeterDataWithLimit(id, offset, limit int, db *gorm.DB) []HisMeterData {
+	var hisMeterDatas []HisMeterData
+	db.Where("id < ?", id).Order("id desc").Offset(offset).Limit(limit).Find(&hisMeterDatas)
+	return hisMeterDatas
 }
 
 func createCompany(db *gorm.DB) {

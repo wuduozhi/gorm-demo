@@ -16,9 +16,9 @@ var mycatDb *gorm.DB
 
 func initSingleDb() {
 	dbUserName := "root"
-	dbPassword := "123456"
-	dbIP := "localhost"
-	dbPort := "3306"
+	dbPassword := "123"
+	dbIP := "120.79.214.246"
+	dbPort := "33064"
 	dbName := "cbdata"
 
 	path := strings.Join([]string{dbUserName, ":", dbPassword, "@(", dbIP, ":", dbPort, ")/", dbName, "?charset=utf8&parseTime=true"}, "")
@@ -49,9 +49,9 @@ func initMyCatDb() {
 }
 
 func initExtraDb(db *gorm.DB) {
-	db.DB().SetConnMaxLifetime(1 * time.Second)
-	db.DB().SetMaxIdleConns(20)
-	db.DB().SetMaxOpenConns(2000)
+	db.DB().SetConnMaxLifetime(10 * time.Second)
+	db.DB().SetMaxIdleConns(0)
+	//db.DB().SetMaxOpenConns(1)
 	// 启用Logger，显示详细日志
 	db.LogMode(false)
 }
@@ -260,8 +260,8 @@ func CreateBenchHisMeterData(count, poolSize int, db *gorm.DB) (useTime time.Dur
 	doChan := make(chan struct{}, count)
 
 	doFunc := func(req interface{}) interface{} {
-		//hisMeterData := req.(models.HisMeterData)
-		//models.CreateHisMeterData(hisMeterData, db)
+		hisMeterData := req.(models.HisMeterData)
+		models.CreateHisMeterData(hisMeterData, db)
 		doChan <- struct{}{}
 		return nil
 	}
@@ -330,31 +330,39 @@ func PrintFormat(tableName, testDB string, poolSize, count int, useTime time.Dur
 		tableName, count, useTime.Seconds(), poolSize, testDB)
 }
 
-func main() {
-	poolSize := 8*2*2
+func InsertAll(){
+	poolSize := 8
 	var useTime time.Duration
 
-	companyCount := 100
+	companyCount := 10
 	_, useTime = CreateBenchCompany(companyCount, poolSize, mycatDb)
 	PrintFormat("comapny", "mycat", poolSize, companyCount, useTime)
 
-	cctCount := 100
+	cctCount := 50
 	_, useTime = CreateBenchCct(nil, cctCount, poolSize, mycatDb)
 	PrintFormat("cct", "mycat", poolSize, cctCount, useTime)
 
-	meterCount := 600
+	meterCount := 200
 	useTime = CreateBenchMeter(meterCount, poolSize, mycatDb)
 	PrintFormat("meter", "mycat", poolSize, cctCount, useTime)
 
-	meterDataCount := 1000
+	meterDataCount := 300
 	useTime = CreateBenchMeterData(meterDataCount, poolSize, mycatDb)
 	PrintFormat("meter-data", "mycat", poolSize, meterDataCount, useTime)
 
-	hisMeterDataCount := 2000
+	hisMeterDataCount := 600
 	useTime = CreateBenchHisMeterData(hisMeterDataCount, poolSize, mycatDb)
 	PrintFormat("his-meter-data", "mycat", poolSize, hisMeterDataCount, useTime)
 
 	//insertHisMeterDataCount := 1600
 	//useTime = SelectBenchHisMeterData(insertHisMeterDataCount, poolSize, mycatDb)
 	//PrintFormat("his-meter-data", "mycat", poolSize, insertHisMeterDataCount, useTime)
+}
+
+func main() {
+	InsertAll()
+	//u := models.GetHisMeterByMeterNo("meter-noP2qMxR",mycatDb)
+	//fmt.Println(u)
+	//models.GetHisMeterByMeterNoRaw("meter-noP2qMxR",mycatDb)
+	//migrate.DoMigrateHisMeter(100,singleDb,mycatDb)
 }

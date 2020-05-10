@@ -65,7 +65,7 @@ def getCode(prefix):
     for i in range(97, 123): # a-z
         code_list.append(chr(i))
 
-    myslice = random.sample(code_list, 6)  # 从list中随机获取6个元素，作为一个片断返回
+    myslice = random.sample(code_list, 10)  # 从list中随机获取6个元素，作为一个片断返回
     verification_code = ''.join(myslice) # list to string
     return prefix+verification_code
 
@@ -152,7 +152,7 @@ if __name__ == '__main__':
     meterID = 1
     startTime = datetime.datetime.now()
     for i in range(companuCount):
-        company_code = str(i+1)
+        company_code = str(i+1) + getCode("company-code")
         company_name = getCode("company")
         company_province = getProvince()
         company_city = getProvince()
